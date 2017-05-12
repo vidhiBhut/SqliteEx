@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import com.example.vidhi.preferenceex.databinding.ActivityHomePageBinding;
 import com.example.vidhi.preferenceex.databinding.ListItemBinding;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +42,8 @@ public class HomePageActivity extends AppCompatActivity {
     RecyclerView mRecyclerView;
     LinearLayoutManager mLinearLayoutManager;
     TextView tvListCategory;
+    ArrayList<TaskModel> unchecked = new ArrayList<>();
+    ArrayList<TaskModel> checked = new ArrayList<>();
 
 
     @Override
@@ -54,17 +57,15 @@ public class HomePageActivity extends AppCompatActivity {
 
         mLinearLayoutManager = new LinearLayoutManager(getApplicationContext());
         mLinearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        mLinearLayoutManager.scrollToPositionWithOffset(2, 20);
+
 
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
-        SqlHelper helper=new SqlHelper(this);
-        ArrayList<TaskModel> tasks=helper.updateView();
-        TestAdapter testAdapter = new TestAdapter(tasks);
+        SqlHelper helper = new SqlHelper(this);
+        ArrayList<TaskModel> tasks1 = helper.updateView();
+        ArrayList<TaskModel> myTask = ordering(tasks1);
+        TestAdapter testAdapter = new TestAdapter(myTask);
         mRecyclerView.setAdapter(testAdapter);
 
-//        ItemTouchHelper.Callback callback = new MovieTouchHelper(testAdapter);
-//        ItemTouchHelper helper1 = new ItemTouchHelper(callback);
-//        helper1.attachToRecyclerView(mRecyclerView);
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(),
                 mLinearLayoutManager.getOrientation());
@@ -73,34 +74,39 @@ public class HomePageActivity extends AppCompatActivity {
 
     }
 
+    public ArrayList<TaskModel> ordering(ArrayList<TaskModel> tasks1) {
+//        ArrayList<TaskModel> unchecked = new ArrayList<>();
+//        ArrayList<TaskModel> checked = new ArrayList<>();
+
+        for (int i = 0; i < tasks1.size(); i++) {
+            if (!tasks1.get(i).getStatus()) {
+                unchecked.add(tasks1.get(i));
+            } else {
+                checked.add(tasks1.get(i));
+            }
+        }
+
+        ArrayList<TaskModel> ordered = new ArrayList<>();
+        ordered.addAll(unchecked);
+        ordered.addAll(checked);
+
+        return ordered;
+    }
+
+    public ArrayList<TaskModel> changeAdapter(ArrayList<TaskModel> tasks2) {
+        ArrayList<TaskModel> newList = ordering(tasks2);
+        return newList;
+
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        SqlHelper helper=new SqlHelper(this);
-        ArrayList<TaskModel> tasks=helper.updateView();
+        SqlHelper helper = new SqlHelper(this);
+        ArrayList<TaskModel> tasks = helper.updateView();
         TestAdapter testAdapter = new TestAdapter(tasks);
         mRecyclerView.setAdapter(testAdapter);
     }
-
-//    public class MovieTouchHelper extends ItemTouchHelper.SimpleCallback {
-//        TestAdapter recycleAdapter;
-//
-//
-//        public MovieTouchHelper(TestAdapter recycleAdapter) {
-//            super(ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT);
-////            this.recycleAdapter = recycleAdapter;
-//        }
-//        @Override
-//        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
-//            recycleAdapter.swap(viewHolder.getAdapterPosition(), target.getAdapterPosition());
-//            return true;
-//        }
-//
-//        @Override
-//        public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-////            recycleAdapter.remove(viewHolder.getAdapterPosition());
-//        }
-//    }
 
     private class TestAdapter extends RecyclerView.Adapter<TestAdapter.TestViewHolder> {
 
@@ -109,55 +115,54 @@ public class HomePageActivity extends AppCompatActivity {
         public TestAdapter(ArrayList<TaskModel> list) {
             this.myList = list;
         }
+
         @Override
         public TestViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             final View itemView = LayoutInflater.from(
                     parent.getContext()).inflate(R.layout.list_item, parent, false);
             return new TestViewHolder(itemView);
         }
-        public void swap(int firstPosition, int secondPosition)
-        {
-            Collections.swap(myList, firstPosition, secondPosition);
-            notifyItemMoved(firstPosition, secondPosition);
-            notifyItemRangeChanged(firstPosition,secondPosition);
-        }
 
-
-
+//        @Override
+//        public void onViewRecycled(TestViewHolder holder) {
+//            super.onViewRecycled(holder);
+//            holder.binding.checkbox1.setOnCheckedChangeListener(null);
+//        }
 
         @Override
-        public void onBindViewHolder(final TestViewHolder holder, final int position) {
-            final TaskModel item=myList.get(position);
-            final TaskModel task = myList.get(position);
+        public void onBindViewHolder(final TestViewHolder holder, int position) {
+            TaskModel task = myList.get(position);
             holder.binding.setTaskModel(task);
-            tvListCategory=holder.binding.tvListCategory;
+            tvListCategory = holder.binding.tvListCategory;
             final CheckBox checkbox1 = holder.binding.checkbox1;
+            holder.binding.executePendingBindings();
             checkbox1.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    task.setStatus(checkbox1.isChecked());
+                    int position = holder.getAdapterPosition();
+                    Log.d(TAG, "onCheckedChanged() called with: buttonView = [" + position + "], isChecked = [" + myList.size() + "]");
+
+                    myList.get(position).setStatus(isChecked);
                     SqlHelper helper = new SqlHelper(getApplicationContext());
                     SQLiteDatabase database = helper.getWritableDatabase();
                     ContentValues content = new ContentValues();
                     content.put(SqlHelper.COLUMN_STATUS, checkbox1.isChecked() ? 1 : 0);
-                    int update = database.update(SqlHelper.TABLE_TASK, content, SqlHelper.COLUMN_ID + " = " + task.getId(), null);
+                    int update = database.update(SqlHelper.TABLE_TASK, content, SqlHelper.COLUMN_ID + " = " + myList.get(position).getId(), null);
                     Log.d(TAG, "onCheckedChanged: update count: " + update);
-                    remove(position);
-                    add(item,position);
-//                    swap(position,myList.size()-1);
+
+
+                    if (isChecked) {
+                        myList.add(myList.get(position));
+                        myList.remove(position);
+                        notifyItemMoved(position, myList.size() - 1);
+                    } else {
+                        myList.add(0, myList.get(position));
+                        myList.remove(position);
+                        notifyItemMoved(position, 0);
+                    }
+
                 }
             });
-
-
-        }
-        public void remove(int position) {
-            myList.remove(position);
-            notifyItemRemoved(position);
-        }
-
-        public void add(TaskModel item1, int position) {
-            myList.add(position, item1);
-            notifyItemInserted(position);
         }
 
         @Override
@@ -190,8 +195,8 @@ public class HomePageActivity extends AppCompatActivity {
 
         if (requestCode == REQ_ADD_TASK) {
             if (resultCode == Activity.RESULT_OK) {
-                SqlHelper helper=new SqlHelper(this);
-                ArrayList<TaskModel> tasks=helper.updateView();
+                SqlHelper helper = new SqlHelper(this);
+                ArrayList<TaskModel> tasks = helper.updateView();
                 TestAdapter testAdapter = new TestAdapter(tasks);
                 mRecyclerView.setAdapter(testAdapter);
             }

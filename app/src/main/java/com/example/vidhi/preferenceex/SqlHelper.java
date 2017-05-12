@@ -18,7 +18,7 @@ import java.util.Objects;
 public class SqlHelper extends SQLiteOpenHelper {
 
     public static final String DB_NAME = "MyData.db";
-    public static final int DB_VERSION = 21;
+    public static final int DB_VERSION = 28;
 
     public static final String TABLE_TASK = "taskTable";
     public static final String COLUMN_ID = "id";
@@ -127,9 +127,6 @@ public class SqlHelper extends SQLiteOpenHelper {
         }
         return taskList;
     }
-
-
-
     public List<ListModel> getAllLabels(){
         List<ListModel> labels = new ArrayList<ListModel>();
         SQLiteDatabase db = this.getReadableDatabase();

@@ -5,9 +5,9 @@ package com.example.vidhi.preferenceex;
  */
 
 public class TaskModel {
-     int id;
-     String task;
-     boolean status;
+    int id;
+    String task;
+    boolean status;
     int listCategory;
     String listCat;
 
@@ -26,7 +26,6 @@ public class TaskModel {
     public void setListCategory(int listCategory) {
         this.listCategory = listCategory;
     }
-
 
 
     public boolean getStatus() {
@@ -52,6 +51,7 @@ public class TaskModel {
     public void setTask(String task) {
         this.task = task;
     }
+
 
     @Override
     public String toString() {
