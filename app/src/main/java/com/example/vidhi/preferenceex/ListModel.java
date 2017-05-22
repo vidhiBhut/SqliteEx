@@ -8,6 +8,18 @@ public class ListModel {
     int listId;
     String list;
 
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    int userId;
+
+
+
     public int getListId() {
         return listId;
     }

@@ -3,6 +3,8 @@ package com.example.vidhi.preferenceex;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.databinding.DataBindingUtil;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,6 +14,16 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.vidhi.preferenceex.databinding.ActivityMainBinding;
+
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+import static com.example.vidhi.preferenceex.LoginActivity.ID;
+import static com.example.vidhi.preferenceex.LoginActivity.MyPREFERENCES1;
+import static com.example.vidhi.preferenceex.LoginActivity.USER_NAME;
+import static com.example.vidhi.preferenceex.SqlHelper.COLUMN_USER_EMAIL;
+import static com.example.vidhi.preferenceex.SqlHelper.TABLE_TASK;
+import static com.example.vidhi.preferenceex.SqlHelper.TABLE_USER;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding activityMainBinding;
@@ -25,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
     Button btn_continue;
     String MobilePattern = "[0-9]{10}";
     String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+    UserModel userModel=new UserModel();
+    int userId;
+    String userName,email;
 
 
     @Override
@@ -36,21 +51,12 @@ public class MainActivity extends AppCompatActivity {
         et_email = (EditText) findViewById(R.id.et_email);
         et_phone = (EditText) findViewById(R.id.et_phone);
         btn_continue = (Button) findViewById(R.id.btn_continue);
-        sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
-
-        String restoredText = sharedpreferences.getString(NAME, null);
-        if (restoredText != null) {
-            String name = sharedpreferences.getString(NAME, "No name defined");
-//            et_name.setText(name);
-            String email = sharedpreferences.getString(EMAIL, "No name defined");
-//            et_email.setText(email);
-            String phone = sharedpreferences.getString(PHONE, "No name defined");
-//            et_phone.setText(phone);
+        sharedpreferences = getSharedPreferences(MyPREFERENCES1, Context.MODE_PRIVATE);
+        String name = sharedpreferences.getString(USER_NAME, "");
+        if (!name.equals("")) {
             Intent intent = new Intent(MainActivity.this, HomePageActivity.class);
-            intent.putExtra("name", name);
             startActivity(intent);
             finish();
-
 
         } else {
 
@@ -60,13 +66,13 @@ public class MainActivity extends AppCompatActivity {
                     String n = et_name.getText().toString();
                     String e = et_email.getText().toString();
                     String p = et_phone.getText().toString();
-
-                    SharedPreferences.Editor editor = sharedpreferences.edit();
-
-                    editor.putString(NAME, n);
-                    editor.putString(EMAIL, e);
-                    editor.putString(PHONE, p);
-                    editor.commit();
+//
+//                    SharedPreferences.Editor editor = sharedpreferences.edit();
+//
+//                    editor.putString(NAME, n);
+//                    editor.putString(EMAIL, e);
+//                    editor.putString(PHONE, p);
+//                    editor.commit();
 
 
 
@@ -88,12 +94,34 @@ public class MainActivity extends AppCompatActivity {
                 {
                     Toast.makeText(getApplicationContext(), "Please enter valid 10 digit phone number", Toast.LENGTH_SHORT).show();
                 }
-                else
-                {
-                    Intent intent = new Intent(MainActivity.this, HomePageActivity.class);
-                    intent.putExtra("name", n);
-                    startActivity(intent);
-                    finish();
+                else {
+//                    Intent intent = new Intent(MainActivity.this, HomePageActivity.class);
+////                    intent.putExtra("name", n);
+//                    startActivity(intent);
+//                    finish();
+
+                    userModel.setName(n);
+                    userModel.setEmail(e);
+                    SqlHelper sqlHelper = new SqlHelper(MainActivity.this);
+                    SQLiteDatabase db = sqlHelper.getReadableDatabase();
+                    Cursor c = db.rawQuery(" SELECT " + COLUMN_USER_EMAIL + " FROM " + TABLE_USER + " WHERE "
+                            + COLUMN_USER_EMAIL + " =?", new String[]{e});
+                    if (c.getCount() > 0) {
+                        Toast.makeText(getApplicationContext(), "User already registered", Toast.LENGTH_SHORT).show();
+                    } else {
+                        sqlHelper.signUp(userModel);
+
+                        UserModel user = sqlHelper.logIn(e);
+                        userId = user.getId();
+                        userName = user.getName();
+                        SharedPreferences.Editor editor = sharedpreferences.edit();
+                        editor.putInt(ID, userId);
+                        editor.putString(USER_NAME, userName);
+                        editor.commit();
+                        Intent intent = new Intent(MainActivity.this, HomePageActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
                 }
 
                 }

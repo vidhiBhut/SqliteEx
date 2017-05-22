@@ -1,7 +1,9 @@
 package com.example.vidhi.preferenceex;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseLockedException;
@@ -26,14 +28,24 @@ import com.example.vidhi.preferenceex.databinding.ListViewItemBinding;
 
 import java.util.ArrayList;
 
+import static com.example.vidhi.preferenceex.LoginActivity.ID;
+import static com.example.vidhi.preferenceex.LoginActivity.MyPREFERENCES1;
+import static com.example.vidhi.preferenceex.LoginActivity.USER_NAME;
+
 public class ViewListActivity extends AppCompatActivity {
 
     RecyclerView rec_view_list;
     LinearLayoutManager mLinearLayoutManager;
+    SharedPreferences sharedpreferences;
+    int userId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_list);
+        sharedpreferences = getSharedPreferences(MyPREFERENCES1, Context.MODE_PRIVATE);
+        userId=sharedpreferences.getInt(ID,2);
+
+
 
         ActionBar ab = getSupportActionBar();
         ab.setHomeAsUpIndicator(R.drawable.ic_keyboard_arrow_left_white_36dp);
@@ -48,7 +60,7 @@ public class ViewListActivity extends AppCompatActivity {
         rec_view_list.setLayoutManager(mLinearLayoutManager);
 
         SqlHelper helper=new SqlHelper(this);
-        ArrayList<ListModel> listOfView= (ArrayList<ListModel>) helper.getAllLabels();
+        ArrayList<ListModel> listOfView= (ArrayList<ListModel>) helper.getAllLabels(userId);
         ListAdapter listAdapter=new ListAdapter(listOfView);
         rec_view_list.setAdapter(listAdapter);
 

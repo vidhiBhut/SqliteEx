@@ -1,9 +1,12 @@
 package com.example.vidhi.preferenceex;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,6 +22,10 @@ import com.example.vidhi.preferenceex.databinding.ActivityAddTaskBinding;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.example.vidhi.preferenceex.LoginActivity.ID;
+import static com.example.vidhi.preferenceex.LoginActivity.MyPREFERENCES1;
+import static com.example.vidhi.preferenceex.LoginActivity.USER_NAME;
+
 public class AddTaskActivity extends AppCompatActivity {
 
     Button btn_done, btn_add_list,btn_view_list;
@@ -27,17 +34,26 @@ public class AddTaskActivity extends AppCompatActivity {
     Spinner spinner;
     List<ListModel> labels;
     TaskModel taskModel = new TaskModel();
-    int myId;
+    int myId,userId;
     List<String > labels1=new ArrayList<String>();
     ActivityAddTaskBinding activityAddTaskBinding;
     public static final int REQ_CODE = 100;
     private static final String TAG = "AddTaskActivity";
+    SharedPreferences sharedpreferences;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_task);
+
+        sharedpreferences = getSharedPreferences(MyPREFERENCES1, Context.MODE_PRIVATE);
+        String name=sharedpreferences.getString(USER_NAME,"vidhi");
+        Log.e("name",name);
+        if (!name.equals("")){
+            userId=sharedpreferences.getInt(ID,2);
+            Log.e(TAG,"uid"+userId);
+        }
 
         et_add_task = (EditText) findViewById(R.id.et_add_task);
         btn_done = (Button) findViewById(R.id.btn_done);
@@ -77,6 +93,7 @@ public class AddTaskActivity extends AppCompatActivity {
                     task = et_add_task.getText().toString();
                     taskModel.setTask(task);
                     taskModel.setListCategory(myId);
+                    taskModel.setUserId(userId);
                     SqlHelper sqlHelper = new SqlHelper(AddTaskActivity.this);
                     sqlHelper.insertData(taskModel);
                     setResult(RESULT_OK);
@@ -113,7 +130,7 @@ public class AddTaskActivity extends AppCompatActivity {
 
     public void loadSpinnerData(){
        SqlHelper db = new SqlHelper(getApplicationContext());
-        labels = db.getAllLabels();
+        labels = db.getAllLabels(userId);
         labels1.clear();
         for (int i=0; i<labels.size();i++){
             String myList=labels.get(i).getList();

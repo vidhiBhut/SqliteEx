@@ -30,7 +30,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.example.vidhi.preferenceex.LoginActivity.ID;
+import static com.example.vidhi.preferenceex.LoginActivity.MyPREFERENCES1;
+import static com.example.vidhi.preferenceex.LoginActivity.USER_NAME;
 import static com.example.vidhi.preferenceex.MainActivity.MyPREFERENCES;
+import static com.example.vidhi.preferenceex.MainActivity.NAME;
 
 
 public class HomePageActivity extends AppCompatActivity {
@@ -41,16 +45,22 @@ public class HomePageActivity extends AppCompatActivity {
     public static final int REQ_ADD_TASK = 99;
     RecyclerView mRecyclerView;
     LinearLayoutManager mLinearLayoutManager;
-    TextView tvListCategory;
-    ArrayList<TaskModel> unchecked = new ArrayList<>();
-    ArrayList<TaskModel> checked = new ArrayList<>();
+    TextView tvListCategory,tvName;
+    int userId;
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         activityHomePageBinding = DataBindingUtil.setContentView(this, R.layout.activity_home_page);
-        sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+        tvName = activityHomePageBinding.tvName;
+        sharedpreferences = getSharedPreferences(MyPREFERENCES1, Context.MODE_PRIVATE);
+        userId=sharedpreferences.getInt(ID,0);
+        String name=sharedpreferences.getString(USER_NAME,"name");
+        Intent intent=getIntent();
+//        String name= intent.getStringExtra("name");
+        tvName.setText("Hello "+name);
         activityHomePageBinding.setHome(this);
 
         mRecyclerView = activityHomePageBinding.recyclerView;
@@ -61,9 +71,8 @@ public class HomePageActivity extends AppCompatActivity {
 
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
         SqlHelper helper = new SqlHelper(this);
-        ArrayList<TaskModel> tasks1 = helper.updateView();
-        ArrayList<TaskModel> myTask = ordering(tasks1);
-        TestAdapter testAdapter = new TestAdapter(myTask);
+        ArrayList<TaskModel> tasks1 = helper.updateView(userId);
+        TestAdapter testAdapter = new TestAdapter(tasks1);
         mRecyclerView.setAdapter(testAdapter);
 
 
@@ -74,36 +83,13 @@ public class HomePageActivity extends AppCompatActivity {
 
     }
 
-    public ArrayList<TaskModel> ordering(ArrayList<TaskModel> tasks1) {
-//        ArrayList<TaskModel> unchecked = new ArrayList<>();
-//        ArrayList<TaskModel> checked = new ArrayList<>();
 
-        for (int i = 0; i < tasks1.size(); i++) {
-            if (!tasks1.get(i).getStatus()) {
-                unchecked.add(tasks1.get(i));
-            } else {
-                checked.add(tasks1.get(i));
-            }
-        }
-
-        ArrayList<TaskModel> ordered = new ArrayList<>();
-        ordered.addAll(unchecked);
-        ordered.addAll(checked);
-
-        return ordered;
-    }
-
-    public ArrayList<TaskModel> changeAdapter(ArrayList<TaskModel> tasks2) {
-        ArrayList<TaskModel> newList = ordering(tasks2);
-        return newList;
-
-    }
 
     @Override
     protected void onResume() {
         super.onResume();
         SqlHelper helper = new SqlHelper(this);
-        ArrayList<TaskModel> tasks = helper.updateView();
+        ArrayList<TaskModel> tasks = helper.updateView(userId);
         TestAdapter testAdapter = new TestAdapter(tasks);
         mRecyclerView.setAdapter(testAdapter);
     }
@@ -182,12 +168,13 @@ public class HomePageActivity extends AppCompatActivity {
 
 
     public void signOut() {
-        Intent i = new Intent(HomePageActivity.this, MainActivity.class);
-        startActivity(i);
-        finish();
         SharedPreferences.Editor editor = sharedpreferences.edit();
         editor.clear();
         editor.apply();
+        Intent i = new Intent(HomePageActivity.this, LoginActivity.class);
+        startActivity(i);
+        finish();
+
     }
 
     @Override
@@ -196,7 +183,7 @@ public class HomePageActivity extends AppCompatActivity {
         if (requestCode == REQ_ADD_TASK) {
             if (resultCode == Activity.RESULT_OK) {
                 SqlHelper helper = new SqlHelper(this);
-                ArrayList<TaskModel> tasks = helper.updateView();
+                ArrayList<TaskModel> tasks = helper.updateView(userId);
                 TestAdapter testAdapter = new TestAdapter(tasks);
                 mRecyclerView.setAdapter(testAdapter);
             }

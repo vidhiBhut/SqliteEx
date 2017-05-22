@@ -10,6 +10,15 @@ public class TaskModel {
     boolean status;
     int listCategory;
     String listCat;
+    int userId;
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
 
     public String getListCat() {
         return listCat;

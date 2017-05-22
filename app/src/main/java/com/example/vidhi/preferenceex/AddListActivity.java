@@ -1,24 +1,40 @@
 package com.example.vidhi.preferenceex;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import static com.example.vidhi.preferenceex.LoginActivity.ID;
+import static com.example.vidhi.preferenceex.LoginActivity.MyPREFERENCES1;
+import static com.example.vidhi.preferenceex.LoginActivity.USER_NAME;
+
 public class AddListActivity extends AppCompatActivity {
 
     EditText et_add_list;
     Button btn_list_done;
     String list;
+    SharedPreferences sharedpreferences;
+    int userId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_list);
 
+        sharedpreferences = getSharedPreferences(MyPREFERENCES1, Context.MODE_PRIVATE);
+        String name=sharedpreferences.getString(USER_NAME,"vidhi");
+        Log.e("name",name);
+        if (!name.equals("")){
+            userId=sharedpreferences.getInt(ID,2);
+
+        }
 
         ActionBar ab = getSupportActionBar();
         ab.setHomeAsUpIndicator(R.drawable.ic_keyboard_arrow_left_white_36dp);
@@ -37,6 +53,7 @@ public class AddListActivity extends AppCompatActivity {
                 } else {
                     ListModel listModel = new ListModel();
                     listModel.setList(list);
+                    listModel.setUserId(userId);
                     SqlHelper sqlHelper = new SqlHelper(AddListActivity.this);
                     sqlHelper.insertList(listModel);
                     setResult(RESULT_OK);
